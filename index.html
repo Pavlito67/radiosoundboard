@@ -62,7 +62,7 @@
 <body>
 
     <h1>📻 RadioBoard Mambero</h1>
-    <p>¡Tu reproductor estándar sin enredos!</p>
+    <p>¡Tu reproductor estándar de alta respuesta!</p>
 
     <div class="player-container">
         <div>🎵 Playing now:</div>
@@ -104,7 +104,6 @@
     </div>
 
     <script>
-        // Lista exacta de tus archivos en GitLab
         const playlist = [
             { file: 'Amor_De_Adolescentes.mp3', title: 'Amor de Adolescentes' },
             { file: 'Cinco_Días.mp3', title: 'Cinco Días' },
@@ -144,10 +143,20 @@
         ];
 
         let currentTrackIndex = 0;
-        let audioPlayer = new Audio(); // UN SOLO REPRODUCTOR CENTRAL
+        let audioPlayer = new Audio();
         let isPlaying = false;
         let activeEffectsList = [];
         let defaultMusicVolume = 1.0;
+
+        // MEJORA 1: Diccionario para almacenar los efectos ya cargados en memoria
+        const preloadedEffects = {};
+        const effectNames = ['airhorn', 'censorship', 'grillo', 'platillos', 'risas', 'abucheo', 'sad-trombone', 'vine-boom', 'scratch', 'campana', 'dramatic', 'wilhelm', 'avello1', 'avello2'];
+
+        // Cargar todos los efectos en segundo plano apenas abra la página
+        effectNames.forEach(name => {
+            preloadedEffects[name] = new Audio('sonidos/' + name + '.mp3');
+            preloadedEffects[name].preload = 'auto'; // Fuerza la descarga inmediata a memoria caché
+        });
 
         function updateDisplayInfo() {
             document.getElementById('song-info').innerText = playlist[currentTrackIndex].title;
@@ -161,23 +170,27 @@
                 playImg.classList.add('paused');
                 isPlaying = false;
             } else {
-                // Si no tiene origen cargado, le asignamos la canción actual
                 if (!audioPlayer.src || audioPlayer.src === "") {
                     audioPlayer.src = 'musica/' + playlist[currentTrackIndex].file;
                 }
-                
-                // Mantiene el volumen bajo si hay efectos activos
                 audioPlayer.volume = activeEffectsList.length > 0 ? 0.3 : defaultMusicVolume;
                 
                 audioPlayer.play().then(() => {
                     playImg.classList.remove('paused');
                     isPlaying = true;
                     updateDisplayInfo();
-                }).catch(err => console.log("Playback blocked or failed: ", err));
+                    preloadNextTrack(); // MEJORA 3: Preparar la que viene
+                }).catch(err => console.log(err));
             }
         }
 
-        // Cambio manual: para en seco, cambia la ruta y reproduce inmediatamente
+        // MEJORA 2: Carga la siguiente canción de forma invisible para que al saltar ya esté lista
+        function preloadNextTrack() {
+            let nextIndex = (currentTrackIndex + 1) % playlist.length;
+            let helperAudio = new Image(); // Truco del navegador para forzar caché de red de forma ligera
+            helperAudio.src = 'musica/' + playlist[nextIndex].file;
+        }
+
         function changeTrackManual(goNext = true) {
             audioPlayer.pause();
             
@@ -188,9 +201,8 @@
             }
 
             audioPlayer.src = 'musica/' + playlist[currentTrackIndex].file;
-            audioPlayer.load(); // Forzar al navegador a leer el archivo nuevo
+            audioPlayer.load(); 
             
-            // Forzar reproducción directa si ya estaba sonando la radio
             isPlaying = false;
             toggleMusic();
         }
@@ -198,35 +210,38 @@
         function nextTrack() { changeTrackManual(true); }
         function previousTrack() { changeTrackManual(false); }
 
-        // Si la canción termina sola, pasa a la siguiente automáticamente (Normal, sin crossfade)
         audioPlayer.onended = function() {
             changeTrackManual(true);
         };
 
-        // CONTROL DE EFECTOS (Baja la música al 30% y vuelve a subir)
+        // MEJORA 4: Los efectos ahora se ejecutan directo de la memoria interna (Cero delay)
         function playEffect(effectName) {
-            let effectAudio = new Audio('sonidos/' + effectName + '.mp3');
-            effectAudio.currentTime = 0;
-            activeEffectsList.push(effectAudio);
+            let cachedAudio = preloadedEffects[effectName];
+            if (!cachedAudio) return;
+
+            // Clonar el nodo cargado para permitir lanzar el mismo sonido muchas veces seguidas sin esperar a que termine
+            let instance = cachedAudio.cloneNode();
+            instance.volume = 1.0;
+            activeEffectsList.push(instance);
 
             if (isPlaying) {
                 audioPlayer.volume = 0.3;
             }
 
-            effectAudio.onended = function() {
-                activeEffectsList = activeEffectsList.filter(item => item !== effectAudio);
+            instance.onended = function() {
+                activeEffectsList = activeEffectsList.filter(item => item !== instance);
                 if (activeEffectsList.length === 0 && isPlaying) {
                     audioPlayer.volume = defaultMusicVolume;
                 }
             };
 
-            effectAudio.play().catch(err => console.log("Effect block: ", err));
+            instance.play().catch(err => console.log(err));
         }
 
         function stopAllEffects() {
-            activeEffectsList.forEach(effectAudio => {
-                effectAudio.pause();
-                effectAudio.currentTime = 0;
+            activeEffectsList.forEach(audio => {
+                audio.pause();
+                audio.currentTime = 0;
             });
             activeEffectsList = [];
             if (isPlaying) {
