@@ -37,7 +37,7 @@
         .btn-destacado { background: #8e44ad; border-color: #7d3c98; }
         #info-cancion { font-weight: bold; color: #2ecc71; margin-top: 5px; }
 
-        /* Estilos para los botones de imagen de 512x512 */
+        /* Botones de imagen de tus archivos 512x512 */
         .btn-control-img {
             background: none;
             border: none;
@@ -104,43 +104,43 @@
         <button class="btn-sonido" onclick="playEfecto('dramatic')">😱 Dramatic Cue</button>
         <button class="btn-sonido" onclick="playEfecto('wilhelm')">😫 Wilhelm Scream</button>
         
-        <!-- Nombres genéricos para tus audios personalizados -->
         <button class="btn-sonido btn-destacado" onclick="playEfecto('avello1')">🎧 Qué Pasó 1</button>
         <button class="btn-sonido btn-destacado" onclick="playEfecto('avello2')">🎧 Qué Pasó 2</button>
     </div>
 
     <script>
+        // PLAYLIST EDITADA EXACTAMENTE SEGÚN TUS NUEVOS ARCHIVOS EN GITLAB
         const playlist = [
             { archivo: 'Amor_De_Adolescentes.mp3', titulo: 'Amor de Adolescentes' },
-            { archivo: 'Cinco Días.mp3', titulo: 'Cinco Días' },
-            { archivo: 'Cómo Dejar_de_Amarte.mp3', titulo: 'Cómo Dejar de Amarte' },
+            { archivo: 'Cinco_Días.mp3', titulo: 'Cinco Días' },
+            { archivo: 'Cómo_Dejar_de_Amarte.mp3', titulo: 'Cómo Dejar de Amarte' },
             { archivo: 'Daniela.mp3', titulo: 'Daniela' },
             { archivo: 'Desnudos.mp3', titulo: 'Desnudos' },
-            { archivo: 'El_Galeón Español.mp3', titulo: 'El Galeón Español' },
+            { archivo: 'El_Galeón_Español.mp3', titulo: 'El Galeón Español' },
             { archivo: 'El_Polvito_del_Amor.mp3', titulo: 'El Polvito del Amor' },
             { archivo: 'Esta_Pegao.mp3', titulo: 'Está Pegao' },
             { archivo: 'Ha_Salido_la_Luna.mp3', titulo: 'Ha Salido la Luna' },
-            { archivo: 'La Cumbia_De_Los_Trapos.mp3', titulo: 'La Cumbia de los Trapos' },
+            { archivo: 'La_Cumbia_De_Los_Trapos.mp3', titulo: 'La Cumbia de los Trapos' },
             { archivo: 'La_Hora_De_Bailar.mp3', titulo: 'La Hora de Bailar' },
-            { archivo: 'La_Peineta_Todos_los_Domingos_Pobre Caminante_Cumbia_para_Adormecerte_La_Mafafa.mp3', titulo: 'Mix La Peineta - Sonora Palacios' },
+            { archivo: 'La_Peineta_Todos_los_Domingos_Pobre_Caminante_Cumbia_para_Adormecerte_La_Mafafa.mp3', titulo: 'Mix La Peineta - Sonora Palacios' },
             { archivo: 'La_Temporera.mp3', titulo: 'La Temporera' },
             { archivo: 'La_Vecina.mp3', titulo: 'La Vecina' },
             { archivo: 'Latinos.mp3', titulo: 'Latinos' },
             { archivo: 'Loca.mp3', titulo: 'Loca' },
             { archivo: 'Mama_Soltera.mp3', titulo: 'Mamá Soltera' },
-            { archivo: 'Me Enamore.mp3', titulo: 'Me Enamoré' },
-            { archivo: 'Me Gusta Todo_De_Ti.mp3', titulo: 'Me Gusta Todo de Ti' },
+            { archivo: 'Me_Enamore.mp3', titulo: 'Me Enamoré' },
+            { archivo: 'Me_Gusta_Todo_De_Ti.mp3', titulo: 'Me Gusta Todo de Ti' },
             { archivo: 'Me_Vas_a_Extrañar_(En_Vivo).mp3', titulo: 'Me Vas a Extrañar (En Vivo)' },
             { archivo: 'Mentirosa.mp3', titulo: 'Mentirosa' },
             { archivo: 'Mujeres_y_Cerveza.mp3', titulo: 'Mujeres y Cerveza' },
-            { archivo: 'No_Podré Olvidarme_De_Ti.mp3', titulo: 'No Podré Olvidarme de Ti' },
-            { archivo: 'No_Quiero Dormir.mp3', titulo: 'No Quiero Dormir (Amar Azul)' },
-            { archivo: 'No_Te_Lo_Puedo_Creer.mp3', titulo: 'No Te Lo Puedo Creer / La Rosa' },
+            { archivo: 'No_Podré_Olvidarme_De_Ti.mp3', titulo: 'No Podré Olvidarme de Ti' },
+            { archivo: 'No_Quiero_Dormir.mp3', titulo: 'No Quiero Dormir' },
+            { archivo: 'No_Te_Lo_Puedo_Creer.mp3', titulo: 'No Te Lo Puedo Creer' },
             { archivo: 'Nunca_Me_Faltes.mp3', titulo: 'Nunca Me Faltes' },
             { archivo: 'Que_Levante_la_Mano.mp3', titulo: 'Que Levante la Mano' },
-            { archivo: 'Que Nadie Se_Entere.mp3', titulo: 'Que Nadie Se Entere' },
-            { archivo: 'Quiero Ser_Libre.mp3', titulo: 'Quiero Ser Libre' },
-            { archivo: 'Simpática_y_Muy Bonita.mp3', titulo: 'Simpática y Muy Bonita' },
+            { archivo: 'Que_Nadie_Se_Entere.mp3', titulo: 'Que Nadie Se Entere' },
+            { archivo: 'Quiero_Ser_Libre.mp3', titulo: 'Quiero Ser Libre' },
+            { archivo: 'Simpática_y_Muy_Bonita.mp3', titulo: 'Simpática y Muy Bonita' },
             { archivo: 'Tiburon.mp3', titulo: 'El Tiburón' },
             { archivo: 'Traicionera.mp3', titulo: 'Traicionera' },
             { archivo: 'Una_Cerveza.mp3', titulo: 'Una Cerveza' },
@@ -155,7 +155,7 @@
         let sonando = false;
         let crossfadeInterval = null;
         let efectosActivos = [];
-        let volumenOriginalMusica = 1; // El volumen base de la música
+        let volumenOriginalMusica = 1;
 
         function actualizarInfo() {
             document.getElementById('info-cancion').innerText = playlist[indexActual].titulo;
@@ -174,7 +174,6 @@
                 if (!activo.src) {
                     activo.src = 'musica/' + playlist[indexActual].archivo;
                 }
-                // Si hay efectos sonando al dar play, la música arranca bajita automáticamente
                 activo.volume = efectosActivos.length > 0 ? 0.3 : volumenOriginalMusica;
                 
                 activo.play().then(() => {
@@ -188,7 +187,7 @@
 
         function monitorearCrossfade(audioActual) {
             audioActual.ontimeupdate = function() {
-                // Crossfade automático de 5 segundos antes de terminar el tema
+                // Crossfade automático de 5 segundos antes de terminar el tema de forma natural
                 if (audioActual.duration - audioActual.currentTime <= 5 && sonando) {
                     audioActual.ontimeupdate = null;
                     lanzarSiguienteTemaConCrossfade();
@@ -231,60 +230,30 @@
 
         function cambiarCancionManual(siguiente = true) {
             clearInterval(crossfadeInterval);
-            let saliente = usandoA ? reproductorA : reproductorB;
+            reproductorA.pause(); reproductorA.src = ""; reproductorA.volume = volumenOriginalMusica;
+            reproductorB.pause(); reproductorB.src = ""; reproductorB.volume = volumenOriginalMusica;
             
-            if (!sonando) {
-                if (siguiente) indexActual = (indexActual + 1) % playlist.length;
-                else indexActual = (indexActual - 1 + playlist.length) % playlist.length;
-                let activo = usandoA ? reproductorA : reproductorB;
-                activo.src = 'musica/' + playlist[indexActual].archivo;
-                toggleMusica();
-                return;
+            if (siguiente) {
+                indexActual = (indexActual + 1) % playlist.length;
+            } else {
+                indexActual = (indexActual - 1 + playlist.length) % playlist.length;
             }
-
-            if (siguiente) indexActual = (indexActual + 1) % playlist.length;
-            else indexActual = (indexActual - 1 + playlist.length) % playlist.length;
             
-            usandoA = !usandoA;
-            let entrante = usandoA ? reproductorA : reproductorB;
-            entrante.src = 'musica/' + playlist[indexActual].archivo;
-            entrante.volume = 0;
+            usandoA = true; 
+            sonando = false; 
             
-            actualizarInfo();
-
-            entrante.play().then(() => {
-                let pasos = 0;
-                let targetVolumen = efectosActivos.length > 0 ? 0.3 : volumenOriginalMusica;
-
-                crossfadeInterval = setInterval(() => {
-                    pasos++;
-                    if (saliente.volume > 0.1) saliente.volume -= 0.1;
-                    if (entrante.volume < (targetVolumen - 0.1)) entrante.volume += 0.1;
-
-                    if (pasos >= 10) {
-                        clearInterval(crossfadeInterval);
-                        saliente.pause();
-                        saliente.volume = volumenOriginalMusica;
-                        entrante.volume = targetVolumen;
-                        monitorearCrossfade(entrante);
-                    }
-                }, 500);
-            }).catch(e => {
-                saliente.pause();
-                toggleMusica();
-            });
+            toggleMusica();
         }
 
         function siguienteCancion() { cambiarCancionManual(true); }
         function anteriorCancion() { cambiarCancionManual(false); }
 
-        // MANEJO DE EFECTOS CON ATENUACIÓN DE MÚSICA (DUCKING)
+        // CONTROL DE EFECTOS CON ATENUACIÓN DE MÚSICA (DUCKING)
         function playEfecto(nombre) {
             let audio = new Audio('sonidos/' + nombre + '.mp3');
             audio.currentTime = 0;
             efectosActivos.push(audio);
 
-            // Bajar volumen de la música al 30% si hay algo reproduciéndose
             if (sonando) {
                 reproductorA.volume = 0.3;
                 reproductorB.volume = 0.3;
@@ -292,7 +261,6 @@
 
             audio.onended = function() {
                 efectosActivos = efectosActivos.filter(a => a !== audio);
-                // Si ya no quedan efectos sonando, la música vuelve a su volumen normal
                 if (efectosActivos.length === 0 && sonando) {
                     reproductorA.volume = volumenOriginalMusica;
                     reproductorB.volume = volumenOriginalMusica;
@@ -308,7 +276,6 @@
                 audio.currentTime = 0;
             });
             efectosActivos = [];
-            // Restaurar volumen inmediatamente
             if (sonando) {
                 reproductorA.volume = volumenOriginalMusica;
                 reproductorB.volume = volumenOriginalMusica;
