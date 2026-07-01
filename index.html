@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RadioBoard Mambero</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e1e2f, #111119);
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 { margin-bottom: 5px; color: #f39c12; }
+        .reproductor {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px auto;
+            max-width: 400px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+        .btn-sonido {
+            background: #34495e; border: 2px solid #2c3e50; color: white;
+            padding: 12px; font-size: 14px; border-radius: 8px;
+            cursor: pointer; font-weight: bold; text-align: left;
+        }
+        .btn-sonido:active { transform: scale(0.95); }
+        .btn-destacado { background: #8e44ad; border-color: #7d3c98; }
+        #info-cancion { font-weight: bold; color: #2ecc71; margin-top: 5px; }
+
+        /* Estilos para los botones de imagen de 512x512 */
+        .btn-control-img {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            outline: none;
+        }
+        .btn-control-img img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+        .btn-control-img:active img {
+            transform: scale(0.9);
+        }
+        .pausado {
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📻 RadioBoard Mambero</h1>
+    <p>¡Tu reproductor con efectos y crossfade!</p>
+
+    <!-- Sección de Música -->
+    <div class="reproductor">
+        <div>🎵 Sonando ahora:</div>
+        <div id="info-cancion">Ninguna - Dale Play</div>
+        
+        <div style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 15px;">
+            <!-- Botón Atrás (atras.png) -->
+            <button class="btn-control-img" onclick="anteriorCancion()">
+                <img src="atras.png" alt="Anterior">
+            </button>
+
+            <!-- Botón Play/Pausa Principal (boton.png) -->
+            <button class="btn-control-img" id="btn-play-img" onclick="toggleMusica()">
+                <img src="boton.png" alt="Play/Pausa" id="img-play-estado" class="pausado">
+            </button>
+
+            <!-- Botón Adelante (adelante.png) -->
+            <button class="btn-control-img" onclick="siguienteCancion()">
+                <img src="adelante.png" alt="Siguiente">
+            </button>
+        </div>
+    </div>
+
+    <!-- Sección de Efectos de Sonido -->
+    <div class="grid">
+        <button class="btn-sonido" onclick="detenerEfectos()" style="grid-column: span 2; background-color: #c0392b; border-color: #e74c3c; text-align:center;">🛑 PARAR EFECTOS</button>
+
+        <button class="btn-sonido" onclick="playEfecto('airhorn')">📯 Airhorn</button>
+        <button class="btn-sonido" onclick="playEfecto('censorship')">🤬 Censorship</button>
+        <button class="btn-sonido" onclick="playEfecto('grillo')">🦗 Grillo</button>
+        <button class="btn-sonido" onclick="playEfecto('platillos')">🥁 Platillos</button>
+        <button class="btn-sonido" onclick="playEfecto('risas')">😂 Risas</button>
+        <button class="btn-sonido" onclick="playEfecto('abucheo')">👎 Abucheo</button>
+        <button class="btn-sonido" onclick="playEfecto('sad-trombone')">🎺 Sad Trombone</button>
+        <button class="btn-sonido" onclick="playEfecto('vine-boom')">💥 Vine Boom</button>
+        <button class="btn-sonido" onclick="playEfecto('scratch')">💿 Record Scratch</button>
+        <button class="btn-sonido" onclick="playEfecto('campana')">🔔 Campana</button>
+        <button class="btn-sonido" onclick="playEfecto('dramatic')">😱 Dramatic Cue</button>
+        <button class="btn-sonido" onclick="playEfecto('wilhelm')">😫 Wilhelm Scream</button>
+        
+        <!-- Nombres genéricos para tus audios personalizados -->
+        <button class="btn-sonido btn-destacado" onclick="playEfecto('avello1')">🎧 Qué Pasó 1</button>
+        <button class="btn-sonido btn-destacado" onclick="playEfecto('avello2')">🎧 Qué Pasó 2</button>
+    </div>
+
+    <script>
+        const playlist = [
+            { archivo: 'Amor_De_Adolescentes.mp3', titulo: 'Amor de Adolescentes' },
+            { archivo: 'Cinco Días.mp3', titulo: 'Cinco Días' },
+            { archivo: 'Cómo Dejar_de_Amarte.mp3', titulo: 'Cómo Dejar de Amarte' },
+            { archivo: 'Daniela.mp3', titulo: 'Daniela' },
+            { archivo: 'Desnudos.mp3', titulo: 'Desnudos' },
+            { archivo: 'El_Galeón Español.mp3', titulo: 'El Galeón Español' },
+            { archivo: 'El_Polvito_del_Amor.mp3', titulo: 'El Polvito del Amor' },
+            { archivo: 'Esta_Pegao.mp3', titulo: 'Está Pegao' },
+            { archivo: 'Ha_Salido_la_Luna.mp3', titulo: 'Ha Salido la Luna' },
+            { archivo: 'La Cumbia_De_Los_Trapos.mp3', titulo: 'La Cumbia de los Trapos' },
+            { archivo: 'La_Hora_De_Bailar.mp3', titulo: 'La Hora de Bailar' },
+            { archivo: 'La_Peineta_Todos_los_Domingos_Pobre Caminante_Cumbia_para_Adormecerte_La_Mafafa.mp3', titulo: 'Mix La Peineta - Sonora Palacios' },
+            { archivo: 'La_Temporera.mp3', titulo: 'La Temporera' },
+            { archivo: 'La_Vecina.mp3', titulo: 'La Vecina' },
+            { archivo: 'Latinos.mp3', titulo: 'Latinos' },
+            { archivo: 'Loca.mp3', titulo: 'Loca' },
+            { archivo: 'Mama_Soltera.mp3', titulo: 'Mamá Soltera' },
+            { archivo: 'Me Enamore.mp3', titulo: 'Me Enamoré' },
+            { archivo: 'Me Gusta Todo_De_Ti.mp3', titulo: 'Me Gusta Todo de Ti' },
+            { archivo: 'Me_Vas_a_Extrañar_(En_Vivo).mp3', titulo: 'Me Vas a Extrañar (En Vivo)' },
+            { archivo: 'Mentirosa.mp3', titulo: 'Mentirosa' },
+            { archivo: 'Mujeres_y_Cerveza.mp3', titulo: 'Mujeres y Cerveza' },
+            { archivo: 'No_Podré Olvidarme_De_Ti.mp3', titulo: 'No Podré Olvidarme de Ti' },
+            { archivo: 'No_Quiero Dormir.mp3', titulo: 'No Quiero Dormir (Amar Azul)' },
+            { archivo: 'No_Te_Lo_Puedo_Creer.mp3', titulo: 'No Te Lo Puedo Creer / La Rosa' },
+            { archivo: 'Nunca_Me_Faltes.mp3', titulo: 'Nunca Me Faltes' },
+            { archivo: 'Que_Levante_la_Mano.mp3', titulo: 'Que Levante la Mano' },
+            { archivo: 'Que Nadie Se_Entere.mp3', titulo: 'Que Nadie Se Entere' },
+            { archivo: 'Quiero Ser_Libre.mp3', titulo: 'Quiero Ser Libre' },
+            { archivo: 'Simpática_y_Muy Bonita.mp3', titulo: 'Simpática y Muy Bonita' },
+            { archivo: 'Tiburon.mp3', titulo: 'El Tiburón' },
+            { archivo: 'Traicionera.mp3', titulo: 'Traicionera' },
+            { archivo: 'Una_Cerveza.mp3', titulo: 'Una Cerveza' },
+            { archivo: 'Yo_Me_Enamore.mp3', titulo: 'Yo Me Enamoré' },
+            { archivo: 'Yo_Tomo.mp3', titulo: 'Yo Tomo Vino y Cerveza' }
+        ];
+
+        let indexActual = 0;
+        let reproductorA = new Audio();
+        let reproductorB = new Audio();
+        let usandoA = true;
+        let sonando = false;
+        let crossfadeInterval = null;
+        let efectosActivos = [];
+        let volumenOriginalMusica = 1; // El volumen base de la música
+
+        function actualizarInfo() {
+            document.getElementById('info-cancion').innerText = playlist[indexActual].titulo;
+        }
+
+        function toggleMusica() {
+            const imgBoton = document.getElementById('img-play-estado');
+            let activo = usandoA ? reproductorA : reproductorB;
+
+            if (sonando) {
+                reproductorA.pause();
+                reproductorB.pause();
+                imgBoton.classList.add('pausado');
+                sonando = false;
+            } else {
+                if (!activo.src) {
+                    activo.src = 'musica/' + playlist[indexActual].archivo;
+                }
+                // Si hay efectos sonando al dar play, la música arranca bajita automáticamente
+                activo.volume = efectosActivos.length > 0 ? 0.3 : volumenOriginalMusica;
+                
+                activo.play().then(() => {
+                    imgBoton.classList.remove('pausado');
+                    sonando = true;
+                    actualizarInfo();
+                    monitorearCrossfade(activo);
+                }).catch(e => console.log("Error al reproducir: ", e));
+            }
+        }
+
+        function monitorearCrossfade(audioActual) {
+            audioActual.ontimeupdate = function() {
+                // Crossfade automático de 5 segundos antes de terminar el tema
+                if (audioActual.duration - audioActual.currentTime <= 5 && sonando) {
+                    audioActual.ontimeupdate = null;
+                    lanzarSiguienteTemaConCrossfade();
+                }
+            };
+        }
+
+        function lanzarSiguienteTemaConCrossfade() {
+            clearInterval(crossfadeInterval);
+            let saliente = usandoA ? reproductorA : reproductorB;
+            
+            indexActual = (indexActual + 1) % playlist.length;
+            usandoA = !usandoA;
+            
+            let entrante = usandoA ? reproductorA : reproductorB;
+            entrante.src = 'musica/' + playlist[indexActual].archivo;
+            entrante.volume = 0;
+            
+            actualizarInfo();
+
+            entrante.play().then(() => {
+                let pasos = 0;
+                let targetVolumen = efectosActivos.length > 0 ? 0.3 : volumenOriginalMusica;
+
+                crossfadeInterval = setInterval(() => {
+                    pasos++;
+                    if (saliente.volume > 0.1) saliente.volume -= 0.1;
+                    if (entrante.volume < (targetVolumen - 0.1)) entrante.volume += 0.1;
+
+                    if (pasos >= 10) {
+                        clearInterval(crossfadeInterval);
+                        saliente.pause();
+                        saliente.volume = volumenOriginalMusica;
+                        entrante.volume = targetVolumen;
+                        monitorearCrossfade(entrante);
+                    }
+                }, 500);
+            }).catch(e => console.log(e));
+        }
+
+        function cambiarCancionManual(siguiente = true) {
+            clearInterval(crossfadeInterval);
+            let saliente = usandoA ? reproductorA : reproductorB;
+            
+            if (!sonando) {
+                if (siguiente) indexActual = (indexActual + 1) % playlist.length;
+                else indexActual = (indexActual - 1 + playlist.length) % playlist.length;
+                let activo = usandoA ? reproductorA : reproductorB;
+                activo.src = 'musica/' + playlist[indexActual].archivo;
+                toggleMusica();
+                return;
+            }
+
+            if (siguiente) indexActual = (indexActual + 1) % playlist.length;
+            else indexActual = (indexActual - 1 + playlist.length) % playlist.length;
+            
+            usandoA = !usandoA;
+            let entrante = usandoA ? reproductorA : reproductorB;
+            entrante.src = 'musica/' + playlist[indexActual].archivo;
+            entrante.volume = 0;
+            
+            actualizarInfo();
+
+            entrante.play().then(() => {
+                let pasos = 0;
+                let targetVolumen = efectosActivos.length > 0 ? 0.3 : volumenOriginalMusica;
+
+                crossfadeInterval = setInterval(() => {
+                    pasos++;
+                    if (saliente.volume > 0.1) saliente.volume -= 0.1;
+                    if (entrante.volume < (targetVolumen - 0.1)) entrante.volume += 0.1;
+
+                    if (pasos >= 10) {
+                        clearInterval(crossfadeInterval);
+                        saliente.pause();
+                        saliente.volume = volumenOriginalMusica;
+                        entrante.volume = targetVolumen;
+                        monitorearCrossfade(entrante);
+                    }
+                }, 500);
+            }).catch(e => {
+                saliente.pause();
+                toggleMusica();
+            });
+        }
+
+        function siguienteCancion() { cambiarCancionManual(true); }
+        function anteriorCancion() { cambiarCancionManual(false); }
+
+        // MANEJO DE EFECTOS CON ATENUACIÓN DE MÚSICA (DUCKING)
+        function playEfecto(nombre) {
+            let audio = new Audio('sonidos/' + nombre + '.mp3');
+            audio.currentTime = 0;
+            efectosActivos.push(audio);
+
+            // Bajar volumen de la música al 30% si hay algo reproduciéndose
+            if (sonando) {
+                reproductorA.volume = 0.3;
+                reproductorB.volume = 0.3;
+            }
+
+            audio.onended = function() {
+                efectosActivos = efectosActivos.filter(a => a !== audio);
+                // Si ya no quedan efectos sonando, la música vuelve a su volumen normal
+                if (efectosActivos.length === 0 && sonando) {
+                    reproductorA.volume = volumenOriginalMusica;
+                    reproductorB.volume = volumenOriginalMusica;
+                }
+            };
+
+            audio.play().catch(e => console.log("Cargando sonido..."));
+        }
+
+        function detenerEfectos() {
+            efectosActivos.forEach(audio => {
+                audio.pause();
+                audio.currentTime = 0;
+            });
+            efectosActivos = [];
+            // Restaurar volumen inmediatamente
+            if (sonando) {
+                reproductorA.volume = volumenOriginalMusica;
+                reproductorB.volume = volumenOriginalMusica;
+            }
+        }
+    </script>
+</body>
+</html>
