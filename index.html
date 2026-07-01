@@ -37,7 +37,7 @@
         .btn-featured { background: #8e44ad; border-color: #7d3c98; }
         #song-info { font-weight: bold; color: #2ecc71; margin-top: 5px; }
 
-        /* Control Images (512x512 assets) */
+        /* Botones de control con tus imágenes */
         .btn-control-img {
             background: none;
             border: none;
@@ -62,32 +62,27 @@
 <body>
 
     <h1>📻 RadioBoard Mambero</h1>
-    <p>Your custom player with effects and crossfade!</p>
+    <p>¡Tu reproductor estándar sin enredos!</p>
 
-    <!-- Music Player Section -->
     <div class="player-container">
         <div>🎵 Playing now:</div>
         <div id="song-info">None - Press Play</div>
         
         <div style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 15px;">
-            <!-- Backward Button (atras.png) -->
             <button class="btn-control-img" onclick="previousTrack()">
                 <img src="atras.png" alt="Previous">
             </button>
 
-            <!-- Play/Pause Button (boton.png) -->
             <button class="btn-control-img" id="btn-play-img" onclick="toggleMusic()">
                 <img src="boton.png" alt="Play/Pause" id="img-play-state" class="paused">
             </button>
 
-            <!-- Forward Button (adelante.png) -->
             <button class="btn-control-img" onclick="nextTrack()">
                 <img src="adelante.png" alt="Next">
             </button>
         </div>
     </div>
 
-    <!-- Sound Effects Grid -->
     <div class="sounds-grid">
         <button class="btn-sound" onclick="stopAllEffects()" style="grid-column: span 2; background-color: #c0392b; border-color: #e74c3c; text-align:center;">🛑 STOP EFFECTS</button>
 
@@ -109,7 +104,7 @@
     </div>
 
     <script>
-        // Exact names matching your GitLab uploads
+        // Lista exacta de tus archivos en GitLab
         const playlist = [
             { file: 'Amor_De_Adolescentes.mp3', title: 'Amor de Adolescentes' },
             { file: 'Cinco_Días.mp3', title: 'Cinco Días' },
@@ -149,11 +144,8 @@
         ];
 
         let currentTrackIndex = 0;
-        let playerA = new Audio();
-        let playerB = new Audio();
-        let isPlayerAActive = true;
+        let audioPlayer = new Audio(); // UN SOLO REPRODUCTOR CENTRAL
         let isPlaying = false;
-        let crossfadeTimer = null;
         let activeEffectsList = [];
         let defaultMusicVolume = 1.0;
 
@@ -163,117 +155,72 @@
 
         function toggleMusic() {
             const playImg = document.getElementById('img-play-state');
-            let activePlayer = isPlayerAActive ? playerA : playerB;
 
             if (isPlaying) {
-                playerA.pause();
-                playerB.pause();
+                audioPlayer.pause();
                 playImg.classList.add('paused');
                 isPlaying = false;
             } else {
-                if (!activePlayer.src) {
-                    activePlayer.src = 'musica/' + playlist[currentTrackIndex].file;
+                // Si no tiene origen cargado, le asignamos la canción actual
+                if (!audioPlayer.src || audioPlayer.src === "") {
+                    audioPlayer.src = 'musica/' + playlist[currentTrackIndex].file;
                 }
-                activePlayer.volume = activeEffectsList.length > 0 ? 0.3 : defaultMusicVolume;
                 
-                activePlayer.play().then(() => {
+                // Mantiene el volumen bajo si hay efectos activos
+                audioPlayer.volume = activeEffectsList.length > 0 ? 0.3 : defaultMusicVolume;
+                
+                audioPlayer.play().then(() => {
                     playImg.classList.remove('paused');
                     isPlaying = true;
                     updateDisplayInfo();
-                    setupCrossfadeMonitor(activePlayer);
-                }).catch(err => console.log("Playback error caught: ", err));
+                }).catch(err => console.log("Playback blocked or failed: ", err));
             }
         }
 
-        function setupCrossfadeMonitor(audioElement) {
-            audioElement.ontimeupdate = function() {
-                // Auto crossfade 5 seconds before track ends naturally
-                if (audioElement.duration - audioElement.currentTime <= 5 && isPlaying) {
-                    audioElement.ontimeupdate = null;
-                    triggerAutomaticCrossfade();
-                }
-            };
-        }
-
-        function triggerAutomaticCrossfade() {
-            clearInterval(crossfadeTimer);
-            let fadingOutPlayer = isPlayerAActive ? playerA : playerB;
-            
-            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-            isPlayerAActive = !isPlayerAActive;
-            
-            let fadingInPlayer = isPlayerAActive ? playerA : playerB;
-            fadingInPlayer.src = 'musica/' + playlist[currentTrackIndex].file;
-            fadingInPlayer.volume = 0;
-            
-            updateDisplayInfo();
-
-            fadingInPlayer.play().then(() => {
-                let steps = 0;
-                let targetVolume = activeEffectsList.length > 0 ? 0.3 : defaultMusicVolume;
-
-                crossfadeTimer = setInterval(() => {
-                    steps++;
-                    if (fadingOutPlayer.volume > 0.1) fadingOutPlayer.volume -= 0.1;
-                    if (fadingInPlayer.volume < (targetVolume - 0.1)) fadingInPlayer.volume += 0.1;
-
-                    if (steps >= 10) {
-                        clearInterval(crossfadeTimer);
-                        fadingOutPlayer.pause();
-                        fadingOutPlayer.volume = defaultMusicVolume;
-                        fadingInPlayer.volume = targetVolume;
-                        setupCrossfadeMonitor(fadingInPlayer);
-                    }
-                }, 500);
-            }).catch(err => console.log(err));
-        }
-
-        // FIX DEFINITIVO PARA LOS BOTONES MANUALES
+        // Cambio manual: para en seco, cambia la ruta y reproduce inmediatamente
         function changeTrackManual(goNext = true) {
-            clearInterval(crossfadeTimer);
+            audioPlayer.pause();
             
-            // Pausar y limpiar absolutamente los src de ambos reproductores para evitar bloqueos del navegador
-            playerA.pause(); playerA.removeAttribute('src'); playerA.load(); playerA.volume = defaultMusicVolume;
-            playerB.pause(); playerB.removeAttribute('src'); playerB.load(); playerB.volume = defaultMusicVolume;
-            
-            // Actualizar índice de canción
             if (goNext) {
                 currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
             } else {
                 currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
             }
+
+            audioPlayer.src = 'musica/' + playlist[currentTrackIndex].file;
+            audioPlayer.load(); // Forzar al navegador a leer el archivo nuevo
             
-            // Forzar inicio desde un solo reproductor base limpio
-            isPlayerAActive = true;
+            // Forzar reproducción directa si ya estaba sonando la radio
             isPlaying = false;
-            
-            // Arrancar la canción inmediatamente de forma estable
             toggleMusic();
         }
 
         function nextTrack() { changeTrackManual(true); }
         function previousTrack() { changeTrackManual(false); }
 
-        // AUDIO DUCKING (BAJAR VOLUMEN AL TOCAR EFECTOS)
+        // Si la canción termina sola, pasa a la siguiente automáticamente (Normal, sin crossfade)
+        audioPlayer.onended = function() {
+            changeTrackManual(true);
+        };
+
+        // CONTROL DE EFECTOS (Baja la música al 30% y vuelve a subir)
         function playEffect(effectName) {
             let effectAudio = new Audio('sonidos/' + effectName + '.mp3');
             effectAudio.currentTime = 0;
             activeEffectsList.push(effectAudio);
 
             if (isPlaying) {
-                playerA.volume = 0.3;
-                playerB.volume = 0.3;
+                audioPlayer.volume = 0.3;
             }
 
             effectAudio.onended = function() {
                 activeEffectsList = activeEffectsList.filter(item => item !== effectAudio);
                 if (activeEffectsList.length === 0 && isPlaying) {
-                    playerA.volume = defaultMusicVolume;
-                    playerB.volume = defaultMusicVolume;
+                    audioPlayer.volume = defaultMusicVolume;
                 }
             };
 
-            effectAudio.play().catch(err => console.log("Effect loading..."));
+            effectAudio.play().catch(err => console.log("Effect block: ", err));
         }
 
         function stopAllEffects() {
@@ -283,8 +230,7 @@
             });
             activeEffectsList = [];
             if (isPlaying) {
-                playerA.volume = defaultMusicVolume;
-                playerB.volume = defaultMusicVolume;
+                audioPlayer.volume = defaultMusicVolume;
             }
         }
     </script>
