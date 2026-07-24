@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <link rel="icon" href="data:,">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Botonera Radio App</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -14,13 +14,16 @@
       <h1>🎙 Radio & Botonera</h1>
     </header>
 
-    <!-- CONTROL MASTER DE VOLUMEN (HASTA 200%) -->
+    <!-- CONTROL MASTER DE VOLUMEN -->
     <section class="card volume-card">
       <div class="volume-header">
         <span>Volumen Master</span>
         <span id="volume-display">100%</span>
       </div>
       <input type="range" id="volume-slider" min="0" max="200" value="100" class="slider">
+      <p id="yt-volume-warning" class="yt-warning" style="display: none;">
+        ⚠️ No se puede cambiar el volumen en videos de YouTube
+      </p>
     </section>
 
     <!-- REPRODUCTOR DE MÚSICA -->
@@ -28,6 +31,11 @@
       <div class="now-playing">
         <span class="label">Sonando ahora:</span>
         <h2 id="current-track-title">Ninguna canción seleccionada</h2>
+      </div>
+
+      <!-- CONTENEDOR PARA EL VIDEO DE YOUTUBE (Oculto por defecto) -->
+      <div id="yt-player-container" style="display: none; margin: 15px 0; text-align: center;">
+        <div id="yt-player"></div>
       </div>
 
       <div class="player-controls">
@@ -51,26 +59,21 @@
         </div>
       </div>
 
-      <div id="sound-grid" class="sound-grid">
-        <!-- Los botones de sonido se generan dinámicamente -->
-      </div>
+      <div id="sound-grid" class="sound-grid"></div>
     </section>
   </div>
 
-  <!-- MODAL: LISTA DE REPRODUCCIÓN -->
+  <!-- MODALES -->
   <div id="modal-playlist" class="modal">
     <div class="modal-content">
       <div class="modal-header">
         <h3>Lista de Canciones</h3>
         <button class="close-modal">&times;</button>
       </div>
-      <ul id="playlist-items" class="playlist-list">
-        <!-- Ítems de la playlist cargados por JavaScript -->
-      </ul>
+      <ul id="playlist-items" class="playlist-list"></ul>
     </div>
   </div>
 
-  <!-- MODAL: AGREGAR MÚSICA -->
   <div id="modal-add-music" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -83,12 +86,11 @@
           <input type="file" id="input-music-file" accept="audio/*" multiple hidden>
         </label>
         <p class="divider">o</p>
-        <button id="btn-add-yt" class="btn btn-primary btn-block">🔗 Cargar URL de Audio Directo / Stream</button>
+        <button id="btn-add-yt" class="btn btn-primary btn-block">🔗 Cargar URL de YouTube / Audio Directo</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: EDITAR / ELIMINAR SONIDO -->
   <div id="modal-edit-sound" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -105,6 +107,8 @@
     </div>
   </div>
 
+  <!-- API de YouTube oficial -->
+  <script src="https://www.youtube.com/iframe_api"></script>
   <script src="app.js"></script>
 </body>
 </html>
