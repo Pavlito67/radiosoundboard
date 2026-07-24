@@ -1,253 +1,109 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RadioBoard Mambero</title>
-    <style>
-        body {
-            background: linear-gradient(135deg, #1e1e2f, #111119);
-            color: white;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-            margin: 0;
-        }
-        h1 { margin-bottom: 5px; color: #f39c12; }
-        .player-container {
-            background: rgba(255,255,255,0.1);
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px auto;
-            max-width: 400px;
-        }
-        .sounds-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            max-width: 400px;
-            margin: 20px auto;
-        }
-        .btn-sound {
-            background: #34495e; border: 2px solid #2c3e50; color: white;
-            padding: 12px; font-size: 14px; border-radius: 8px;
-            cursor: pointer; font-weight: bold; text-align: left;
-        }
-        .btn-sound:active { transform: scale(0.95); }
-        .btn-featured { background: #8e44ad; border-color: #7d3c98; }
-        #song-info { font-weight: bold; color: #2ecc71; margin-top: 5px; }
-
-        /* Botones de control con tus imágenes */
-        .btn-control-img {
-            background: none;
-            border: none;
-            padding: 0;
-            cursor: pointer;
-            outline: none;
-        }
-        .btn-control-img img {
-            width: 60px;
-            height: 60px;
-            object-fit: contain;
-            transition: transform 0.1s, opacity 0.2s;
-        }
-        .btn-control-img:active img {
-            transform: scale(0.9);
-        }
-        .paused {
-            opacity: 0.6;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Botonera Radio App</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <h1>📻 RadioBoard Mambero</h1>
-    <p>¡Tu reproductor estándar de alta respuesta!</p>
+  <div class="app-container">
+    <header class="app-header">
+      <h1>🎙 Radio & Botonera</h1>
+    </header>
 
-    <div class="player-container">
-        <div>🎵 Playing now:</div>
-        <div id="song-info">None - Press Play</div>
-        
-        <div style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 15px;">
-            <button class="btn-control-img" onclick="previousTrack()">
-                <img src="atras.png" alt="Previous">
-            </button>
+    <!-- CONTROL MASTER DE VOLUMEN (HASTA 200%) -->
+    <section class="card volume-card">
+      <div class="volume-header">
+        <span>Volumen Master</span>
+        <span id="volume-display">100%</span>
+      </div>
+      <input type="range" id="volume-slider" min="0" max="200" value="100" class="slider">
+    </section>
 
-            <button class="btn-control-img" id="btn-play-img" onclick="toggleMusic()">
-                <img src="boton.png" alt="Play/Pause" id="img-play-state" class="paused">
-            </button>
+    <!-- REPRODUCTOR DE MÚSICA -->
+    <section class="card player-card">
+      <div class="now-playing">
+        <span class="label">Sonando ahora:</span>
+        <h2 id="current-track-title">Ninguna canción seleccionada</h2>
+      </div>
 
-            <button class="btn-control-img" onclick="nextTrack()">
-                <img src="adelante.png" alt="Next">
-            </button>
+      <div class="player-controls">
+        <button id="btn-play-pause" class="btn btn-primary">▶ Play</button>
+        <button id="btn-next" class="btn btn-secondary">⏭ Random</button>
+      </div>
+
+      <div class="player-actions">
+        <button id="btn-playlist" class="btn btn-link">📋 Ver Playlist</button>
+        <button id="btn-add-music" class="btn btn-link">+ Añadir Música</button>
+      </div>
+    </section>
+
+    <!-- BOTONERA DE EFECTOS -->
+    <section class="card soundboard-card">
+      <div class="soundboard-header">
+        <h3>Efectos de Sonido</h3>
+        <div class="soundboard-actions">
+          <button id="btn-stop-sounds" class="btn btn-danger btn-sm">⏹ Detener Sonidos</button>
+          <button id="btn-add-sound" class="btn btn-success btn-sm">+ Sonido</button>
         </div>
+      </div>
+
+      <div id="sound-grid" class="sound-grid">
+        <!-- Los botones de sonido se generan dinámicamente -->
+      </div>
+    </section>
+  </div>
+
+  <!-- MODAL: LISTA DE REPRODUCCIÓN -->
+  <div id="modal-playlist" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Lista de Canciones</h3>
+        <button class="close-modal">&times;</button>
+      </div>
+      <ul id="playlist-items" class="playlist-list">
+        <!-- Ítems de la playlist cargados por JavaScript -->
+      </ul>
     </div>
+  </div>
 
-    <div class="sounds-grid">
-        <button class="btn-sound" onclick="stopAllEffects()" style="grid-column: span 2; background-color: #c0392b; border-color: #e74c3c; text-align:center;">🛑 STOP EFFECTS</button>
-
-        <button class="btn-sound" onclick="playEffect('airhorn')">📯 Airhorn</button>
-        <button class="btn-sound" onclick="playEffect('censorship')">🤬 Censorship</button>
-        <button class="btn-sound" onclick="playEffect('grillo')">🦗 Grillo</button>
-        <button class="btn-sound" onclick="playEffect('platillos')">🥁 Platillos</button>
-        <button class="btn-sound" onclick="playEffect('risas')">😂 Risas</button>
-        <button class="btn-sound" onclick="playEffect('abucheo')">👎 Abucheo</button>
-        <button class="btn-sound" onclick="playEffect('sad-trombone')">🎺 Sad Trombone</button>
-        <button class="btn-sound" onclick="playEffect('vine-boom')">💥 Vine Boom</button>
-        <button class="btn-sound" onclick="playEffect('scratch')">💿 Record Scratch</button>
-        <button class="btn-sound" onclick="playEffect('campana')">🔔 Campana</button>
-        <button class="btn-sound" onclick="playEffect('dramatic')">😱 Dramatic Cue</button>
-        <button class="btn-sound" onclick="playEffect('wilhelm')">😫 Wilhelm Scream</button>
-        
-        <button class="btn-sound btn-featured" onclick="playEffect('avello1')">🎧 Qué Pasó 1</button>
-        <button class="btn-sound btn-featured" onclick="playEffect('avello2')">🎧 Qué Pasó 2</button>
+  <!-- MODAL: AGREGAR MÚSICA -->
+  <div id="modal-add-music" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Añadir Música</h3>
+        <button class="close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label class="btn btn-file">
+          📁 Seleccionar Archivos MP3 Locales
+          <input type="file" id="input-music-file" accept="audio/*" multiple hidden>
+        </label>
+        <p class="divider">o</p>
+        <button id="btn-add-yt" class="btn btn-primary btn-block">🔗 Cargar URL de Audio Directo / Stream</button>
+      </div>
     </div>
+  </div>
 
-    <script>
-        const playlist = [
-            { file: 'Amor_De_Adolescentes.mp3', title: 'Amor de Adolescentes' },
-            { file: 'Cinco_Días.mp3', title: 'Cinco Días' },
-            { file: 'Cómo_Dejar_de_Amarte.mp3', title: 'Cómo Dejar de Amarte' },
-            { file: 'Daniela.mp3', title: 'Daniela' },
-            { file: 'Desnudos.mp3', title: 'Desnudos' },
-            { file: 'El_Galeón_Español.mp3', title: 'El Galeón Español' },
-            { file: 'El_Polvito_del_Amor.mp3', title: 'El Polvito del Amor' },
-            { file: 'Esta_Pegao.mp3', title: 'Está Pegao' },
-            { file: 'Ha_Salido_la_Luna.mp3', title: 'Ha Salido la Luna' },
-            { file: 'La_Cumbia_De_Los_Trapos.mp3', title: 'La Cumbia de los Trapos' },
-            { file: 'La_Hora_De_Bailar.mp3', title: 'La Hora de Bailar' },
-            { file: 'La_Peineta_Todos_los_Domingos_Pobre_Caminante_Cumbia_para_Adormecerte_La_Mafafa.mp3', title: 'Mix La Peineta - Sonora Palacios' },
-            { file: 'La_Temporera.mp3', title: 'La Temporera' },
-            { file: 'La_Vecina.mp3', title: 'La Vecina' },
-            { file: 'Latinos.mp3', title: 'Latinos' },
-            { file: 'Loca.mp3', title: 'Loca' },
-            { file: 'Mama_Soltera.mp3', title: 'Mamá Soltera' },
-            { file: 'Me_Enamore.mp3', title: 'Me Enamoré' },
-            { file: 'Me_Gusta_Todo_De_Ti.mp3', title: 'Me Gusta Todo de Ti' },
-            { file: 'Me_Vas_a_Extrañar_(En_Vivo).mp3', title: 'Me Vas a Extrañar (En Vivo)' },
-            { file: 'Mentirosa.mp3', title: 'Mentirosa' },
-            { file: 'Mujeres_y_Cerveza.mp3', title: 'Mujeres y Cerveza' },
-            { file: 'No_Podré_Olvidarme_De_Ti.mp3', title: 'No Podré Olvidarme de Ti' },
-            { file: 'No_Quiero_Dormir.mp3', title: 'No Quiero Dormir' },
-            { file: 'No_Te_Lo_Puedo_Creer.mp3', title: 'No Te Lo Puedo Creer' },
-            { file: 'Nunca_Me_Faltes.mp3', title: 'Nunca Me Faltes' },
-            { file: 'Que_Levante_la_Mano.mp3', title: 'Que Levante la Mano' },
-            { file: 'Que_Nadie_Se_Entere.mp3', title: 'Que Nadie Se Entere' },
-            { file: 'Quiero_Ser_Libre.mp3', title: 'Quiero Ser Libre' },
-            { file: 'Simpática_y_Muy_Bonita.mp3', title: 'Simpática y Muy Bonita' },
-            { file: 'Tiburon.mp3', title: 'El Tiburón' },
-            { file: 'Traicionera.mp3', title: 'Traicionera' },
-            { file: 'Una_Cerveza.mp3', title: 'Una Cerveza' },
-            { file: 'Yo_Me_Enamore.mp3', title: 'Yo Me Enamoré' },
-            { file: 'Yo_Tomo.mp3', title: 'Yo Tomo Vino y Cerveza' }
-        ];
+  <!-- MODAL: EDITAR / ELIMINAR SONIDO -->
+  <div id="modal-edit-sound" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Editar Efecto</h3>
+        <button class="close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="input-sound-name" class="input-text" placeholder="Nombre del sonido">
+        <div class="modal-footer">
+          <button id="btn-save-sound-name" class="btn btn-success">Guardar</button>
+          <button id="btn-delete-sound" class="btn btn-danger">Eliminar</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        let currentTrackIndex = 0;
-        let audioPlayer = new Audio();
-        let isPlaying = false;
-        let activeEffectsList = [];
-        let defaultMusicVolume = 1.0;
-
-        // MEJORA 1: Diccionario para almacenar los efectos ya cargados en memoria
-        const preloadedEffects = {};
-        const effectNames = ['airhorn', 'censorship', 'grillo', 'platillos', 'risas', 'abucheo', 'sad-trombone', 'vine-boom', 'scratch', 'campana', 'dramatic', 'wilhelm', 'avello1', 'avello2'];
-
-        // Cargar todos los efectos en segundo plano apenas abra la página
-        effectNames.forEach(name => {
-            preloadedEffects[name] = new Audio('sonidos/' + name + '.mp3');
-            preloadedEffects[name].preload = 'auto'; // Fuerza la descarga inmediata a memoria caché
-        });
-
-        function updateDisplayInfo() {
-            document.getElementById('song-info').innerText = playlist[currentTrackIndex].title;
-        }
-
-        function toggleMusic() {
-            const playImg = document.getElementById('img-play-state');
-
-            if (isPlaying) {
-                audioPlayer.pause();
-                playImg.classList.add('paused');
-                isPlaying = false;
-            } else {
-                if (!audioPlayer.src || audioPlayer.src === "") {
-                    audioPlayer.src = 'musica/' + playlist[currentTrackIndex].file;
-                }
-                audioPlayer.volume = activeEffectsList.length > 0 ? 0.3 : defaultMusicVolume;
-                
-                audioPlayer.play().then(() => {
-                    playImg.classList.remove('paused');
-                    isPlaying = true;
-                    updateDisplayInfo();
-                    preloadNextTrack(); // MEJORA 3: Preparar la que viene
-                }).catch(err => console.log(err));
-            }
-        }
-
-        // MEJORA 2: Carga la siguiente canción de forma invisible para que al saltar ya esté lista
-        function preloadNextTrack() {
-            let nextIndex = (currentTrackIndex + 1) % playlist.length;
-            let helperAudio = new Image(); // Truco del navegador para forzar caché de red de forma ligera
-            helperAudio.src = 'musica/' + playlist[nextIndex].file;
-        }
-
-        function changeTrackManual(goNext = true) {
-            audioPlayer.pause();
-            
-            if (goNext) {
-                currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-            } else {
-                currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
-            }
-
-            audioPlayer.src = 'musica/' + playlist[currentTrackIndex].file;
-            audioPlayer.load(); 
-            
-            isPlaying = false;
-            toggleMusic();
-        }
-
-        function nextTrack() { changeTrackManual(true); }
-        function previousTrack() { changeTrackManual(false); }
-
-        audioPlayer.onended = function() {
-            changeTrackManual(true);
-        };
-
-        // MEJORA 4: Los efectos ahora se ejecutan directo de la memoria interna (Cero delay)
-        function playEffect(effectName) {
-            let cachedAudio = preloadedEffects[effectName];
-            if (!cachedAudio) return;
-
-            // Clonar el nodo cargado para permitir lanzar el mismo sonido muchas veces seguidas sin esperar a que termine
-            let instance = cachedAudio.cloneNode();
-            instance.volume = 1.0;
-            activeEffectsList.push(instance);
-
-            if (isPlaying) {
-                audioPlayer.volume = 0.3;
-            }
-
-            instance.onended = function() {
-                activeEffectsList = activeEffectsList.filter(item => item !== instance);
-                if (activeEffectsList.length === 0 && isPlaying) {
-                    audioPlayer.volume = defaultMusicVolume;
-                }
-            };
-
-            instance.play().catch(err => console.log(err));
-        }
-
-        function stopAllEffects() {
-            activeEffectsList.forEach(audio => {
-                audio.pause();
-                audio.currentTime = 0;
-            });
-            activeEffectsList = [];
-            if (isPlaying) {
-                audioPlayer.volume = defaultMusicVolume;
-            }
-        }
-    </script>
+  <script src="app.js"></script>
 </body>
 </html>
