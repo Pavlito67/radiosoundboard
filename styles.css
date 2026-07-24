@@ -284,3 +284,10 @@ body {
   justify-content: flex-end;
   gap: 10px;
 }
+.yt-warning {
+  color: #ff9800;
+  font-size: 0.8rem;
+  margin-top: 8px;
+  text-align: center;
+  font-weight: bold;
+}
