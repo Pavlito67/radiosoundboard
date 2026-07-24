@@ -1,15 +1,33 @@
 // ==========================================
-// ESTADO DE LA APLICACIÓN Y MOTOR DE AUDIO
+// REPRODUCTORES Y ESTADO DE AUDIO
 // ==========================================
 let masterVolume = 1.0; 
 let isDuck = false; 
 let currentAudioPlayer = 0; 
+let isPlayingYT = false;
 
 const playerA = new Audio();
 const playerB = new Audio();
+playerA.crossOrigin = "anonymous";
+playerB.crossOrigin = "anonymous";
 const players = [playerA, playerB];
 
-// CONTEXTO DE AUDIO PARA VOLUMEN HASTA 200%
+let ytPlayer = null;
+let isYTApiReady = false;
+
+// Cargar la API de YouTube
+window.onYouTubeIframeAPIReady = function() {
+  isYTApiReady = true;
+};
+
+// Extraer ID de video de YouTube
+function getYouTubeID(url) {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+}
+
+// CONTEXTO DE AUDIO PARA BOOST DE VOLUMEN EN MP3
 let audioCtx = null;
 let gainNodeA = null;
 let gainNodeB = null;
@@ -32,18 +50,16 @@ function initAudioContext() {
 
     gainNodes = [gainNodeA, gainNodeB];
   }
-
   if (audioCtx.state === 'suspended') {
     audioCtx.resume();
   }
 }
 
-// Activar el AudioContext al interactuar por primera vez con la pantalla
 document.addEventListener('click', initAudioContext, { once: true });
 document.addEventListener('touchstart', initAudioContext, { once: true });
 
 // ==========================================
-// LISTA DE MÚSICA PRE-CARGADA (35 CANCIONES)
+// PLAYLIST DE CANCIONES Y EFECTOS
 // ==========================================
 let playlist = JSON.parse(localStorage.getItem('radio_playlist')) || [
   { name: 'Amor De Adolescentes', src: 'musica/Amor_De_Adolescentes.mp3' },
@@ -83,9 +99,6 @@ let playlist = JSON.parse(localStorage.getItem('radio_playlist')) || [
   { name: 'Yo Tomo', src: 'musica/Yo_Tomo.mp3' }
 ];
 
-// ==========================================
-// LISTA DE SONIDOS PRE-CARGADA (14 EFECTOS)
-// ==========================================
 let soundsList = JSON.parse(localStorage.getItem('radio_sounds')) || [
   { id: '1',  name: 'Abucheo',      src: 'sonidos/abucheo.mp3' },
   { id: '2',  name: 'Airhorn',      src: 'sonidos/airhorn.mp3' },
@@ -108,21 +121,18 @@ let activeSoundAudios = [];
 let selectedSoundId = null;
 let longPressTimer = null;
 
-// ==========================================
 // ELEMENTOS DEL DOM
-// ==========================================
 const volumeSlider = document.getElementById('volume-slider');
 const volumeDisplay = document.getElementById('volume-display');
+const ytVolumeWarning = document.getElementById('yt-volume-warning');
 const btnPlayPause = document.getElementById('btn-play-pause');
 const btnNext = document.getElementById('btn-next');
 const btnStopSounds = document.getElementById('btn-stop-sounds');
 const btnAddSound = document.getElementById('btn-add-sound');
 const soundGrid = document.getElementById('sound-grid');
 const trackTitle = document.getElementById('current-track-title');
+const ytContainer = document.getElementById('yt-player-container');
 
-// ==========================================
-// INICIALIZACIÓN
-// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   renderSounds();
   setupEventListeners();
@@ -130,22 +140,37 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// CONTROL DE VOLUMEN Y ATENUACIÓN (DUCKING)
+// CONTROL DE VOLUMEN Y MODO YOUTUBE
 // ==========================================
+function setYouTubeMode(active) {
+  isPlayingYT = active;
+  if (active) {
+    volumeSlider.disabled = true;
+    volumeSlider.style.opacity = "0.3";
+    ytVolumeWarning.style.display = "block";
+    btnPlayPause.style.display = "none"; // Se oculta porque la pausa se hace directamente en el video
+    ytContainer.style.display = "block";
+  } else {
+    volumeSlider.disabled = false;
+    volumeSlider.style.opacity = "1";
+    ytVolumeWarning.style.display = "none";
+    btnPlayPause.style.display = "inline-block";
+    ytContainer.style.display = "none";
+    if (ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
+  }
+}
+
 function updateVolume() {
+  if (isPlayingYT) return;
   masterVolume = parseFloat(volumeSlider.value) / 100;
   volumeDisplay.textContent = `${volumeSlider.value}%`;
   
   const effectiveVolume = isDuck ? (masterVolume * 0.5) : masterVolume;
   
   if (gainNodes.length > 0) {
-    gainNodes.forEach(gain => {
-      gain.gain.value = effectiveVolume;
-    });
+    gainNodes.forEach(gain => gain.gain.value = effectiveVolume);
   } else {
-    players.forEach(p => {
-      p.volume = Math.min(Math.max(effectiveVolume, 0), 1);
-    });
+    players.forEach(p => p.volume = Math.min(Math.max(effectiveVolume, 0), 1));
   }
 }
 
@@ -155,70 +180,64 @@ function setDucking(active) {
 }
 
 // ==========================================
-// REPRODUCCIÓN Y CROSSFADE ENTRE TEMAS
+// REPRODUCCIÓN
 // ==========================================
 function playNextTrack(forcedSrc = null) {
   initAudioContext();
 
+  // Detener reproductores de MP3 actuales
+  players.forEach(p => p.pause());
+
   let nextTrackSrc = forcedSrc;
+  let trackName = "";
 
   if (!nextTrackSrc) {
-    if (playlist.length === 0) {
-      alert("No hay canciones en la lista.");
-      return;
-    }
+    if (playlist.length === 0) return alert("No hay canciones en la lista.");
     if (playedIndices.length >= playlist.length) playedIndices = [];
     let available = playlist.map((_, i) => i).filter(i => !playedIndices.includes(i));
     let randomIndex = available[Math.floor(Math.random() * available.length)];
     playedIndices.push(randomIndex);
     
     nextTrackSrc = playlist[randomIndex].src;
-    trackTitle.textContent = playlist[randomIndex].name;
+    trackName = playlist[randomIndex].name;
   }
 
-  const currentPlayer = players[currentAudioPlayer];
-  currentAudioPlayer = (currentAudioPlayer + 1) % 2;
-  const nextPlayer = players[currentAudioPlayer];
+  const ytID = getYouTubeID(nextTrackSrc);
 
-  nextPlayer.src = nextTrackSrc;
-  const targetVol = isDuck ? (masterVolume * 0.5) : masterVolume;
-  
-  if (gainNodes.length > 0) {
-    gainNodes[currentAudioPlayer].gain.value = 0;
-  } else {
-    nextPlayer.volume = 0;
-  }
+  if (ytID) {
+    // MODO YOUTUBE
+    setYouTubeMode(true);
+    trackTitle.textContent = trackName || "Video de YouTube";
 
-  nextPlayer.play().then(() => {
-    btnPlayPause.textContent = "⏸ Pausa";
-  }).catch(e => {
-    console.log("Error de reproducción:", e);
-  });
-
-  // Crossfade progresivo de 6 segundos
-  let step = 0;
-  const fadeInterval = setInterval(() => {
-    step++;
-    const factor = step / 60;
-    const prevIndex = (currentAudioPlayer + 1) % 2;
-    
-    if (gainNodes.length > 0) {
-      if (currentPlayer && !currentPlayer.paused) {
-        gainNodes[prevIndex].gain.value = Math.max(0, targetVol * (1 - factor));
-      }
-      gainNodes[currentAudioPlayer].gain.value = Math.max(0, targetVol * factor);
+    if (ytPlayer && ytPlayer.loadVideoById) {
+      ytPlayer.loadVideoById(ytID);
     } else {
-      if (currentPlayer && !currentPlayer.paused) {
-        currentPlayer.volume = Math.min(1, Math.max(0, targetVol * (1 - factor)));
-      }
-      nextPlayer.volume = Math.min(1, Math.max(0, targetVol * factor));
+      ytPlayer = new YT.Player('yt-player', {
+        height: '200',
+        width: '100%',
+        videoId: ytID,
+        playerVars: { 'autoplay': 1, 'controls': 1 }
+      });
     }
+  } else {
+    // MODO MP3 LOCAL / STREAM
+    setYouTubeMode(false);
+    if (trackName) trackTitle.textContent = trackName;
 
-    if (step >= 60) {
-      clearInterval(fadeInterval);
-      if (currentPlayer) currentPlayer.pause();
-    }
-  }, 100);
+    const currentPlayer = players[currentAudioPlayer];
+    currentAudioPlayer = (currentAudioPlayer + 1) % 2;
+    const nextPlayer = players[currentAudioPlayer];
+
+    nextPlayer.src = nextTrackSrc;
+    const targetVol = isDuck ? (masterVolume * 0.5) : masterVolume;
+    
+    if (gainNodes.length > 0) gainNodes[currentAudioPlayer].gain.value = targetVol;
+    else nextPlayer.volume = targetVol;
+
+    nextPlayer.play().then(() => {
+      btnPlayPause.textContent = "⏸ Pausa";
+    }).catch(e => console.log("Error de reproducción:", e));
+  }
 }
 
 // ==========================================
@@ -231,22 +250,16 @@ function playSound(src) {
   activeSoundAudios.push(sound);
   
   setDucking(true);
-
-  sound.play().catch(e => console.log("Error al reproducir sonido:", e));
+  sound.play().catch(e => console.log("Error en sonido:", e));
 
   sound.onended = () => {
     activeSoundAudios = activeSoundAudios.filter(s => s !== sound);
-    if (activeSoundAudios.length === 0) {
-      setDucking(false);
-    }
+    if (activeSoundAudios.length === 0) setDucking(false);
   };
 }
 
 btnStopSounds.addEventListener('click', () => {
-  activeSoundAudios.forEach(s => {
-    s.pause();
-    s.currentTime = 0;
-  });
+  activeSoundAudios.forEach(s => { s.pause(); s.currentTime = 0; });
   activeSoundAudios = [];
   setDucking(false);
 });
@@ -257,12 +270,9 @@ function renderSounds() {
     const btn = document.createElement('button');
     btn.className = 'btn btn-sound';
     btn.textContent = s.name;
-
     btn.addEventListener('click', () => playSound(s.src));
 
-    const startPress = () => {
-      longPressTimer = setTimeout(() => openEditSoundModal(s.id), 800);
-    };
+    const startPress = () => longPressTimer = setTimeout(() => openEditSoundModal(s.id), 800);
     const cancelPress = () => clearTimeout(longPressTimer);
 
     btn.addEventListener('touchstart', startPress);
@@ -273,7 +283,6 @@ function renderSounds() {
 
     soundGrid.appendChild(btn);
   });
-  
   localStorage.setItem('radio_sounds', JSON.stringify(soundsList));
 }
 
@@ -298,22 +307,18 @@ function setupEventListeners() {
 
   btnNext.addEventListener('click', () => playNextTrack());
 
-  // Cargar MP3 desde almacenamiento local
   document.getElementById('input-music-file').addEventListener('change', (e) => {
     const files = Array.from(e.target.files);
-    files.forEach(f => {
-      playlist.push({ name: f.name.replace(/\.[^/.]+$/, ""), src: URL.createObjectURL(f) });
-    });
+    files.forEach(f => playlist.push({ name: f.name.replace(/\.[^/.]+$/, ""), src: URL.createObjectURL(f) }));
     localStorage.setItem('radio_playlist', JSON.stringify(playlist));
     alert(`${files.length} canción(es) agregada(s).`);
     closeModals();
   });
 
-  // Cargar por URL o Stream directo
   document.getElementById('btn-add-yt').addEventListener('click', () => {
-    const url = prompt("Pega la URL del audio (.mp3 o stream directo):");
+    const url = prompt("Pega la URL de YouTube o el audio directo (.mp3):");
     if (url) {
-      const title = prompt("Escribe el nombre del tema:") || "Audio por URL";
+      const title = prompt("Escribe el nombre del tema:") || "Canción Añadida";
       playlist.push({ name: title, src: url });
       localStorage.setItem('radio_playlist', JSON.stringify(playlist));
       playNextTrack(url);
@@ -322,24 +327,19 @@ function setupEventListeners() {
     }
   });
 
-  // Abrir Modal de Playlist
   document.getElementById('btn-playlist').addEventListener('click', () => {
     const list = document.getElementById('playlist-items');
     list.innerHTML = '';
-    if (playlist.length === 0) {
-      list.innerHTML = '<li>No hay canciones guardadas</li>';
-    } else {
-      playlist.forEach((item, index) => {
-        const li = document.createElement('li');
-        li.textContent = `${index + 1}. ${item.name}`;
-        li.onclick = () => { 
-          playNextTrack(item.src); 
-          trackTitle.textContent = item.name;
-          closeModals(); 
-        };
-        list.appendChild(li);
-      });
-    }
+    playlist.forEach((item, index) => {
+      const li = document.createElement('li');
+      li.textContent = `${index + 1}. ${item.name}`;
+      li.onclick = () => { 
+        playNextTrack(item.src); 
+        trackTitle.textContent = item.name;
+        closeModals(); 
+      };
+      list.appendChild(li);
+    });
     document.getElementById('modal-playlist').style.display = 'flex';
   });
 
@@ -354,21 +354,14 @@ function setupEventListeners() {
     input.onchange = (e) => {
       const file = e.target.files[0];
       if (file) {
-        const newSound = {
-          id: Date.now().toString(),
-          name: file.name.replace(/\.[^/.]+$/, ""),
-          src: URL.createObjectURL(file)
-        };
-        soundsList.push(newSound);
+        soundsList.push({ id: Date.now().toString(), name: file.name.replace(/\.[^/.]+$/, ""), src: URL.createObjectURL(file) });
         renderSounds();
       }
     };
     input.click();
   });
 
-  document.querySelectorAll('.close-modal').forEach(b => {
-    b.onclick = closeModals;
-  });
+  document.querySelectorAll('.close-modal').forEach(b => b.onclick = closeModals);
 }
 
 function openEditSoundModal(id) {
