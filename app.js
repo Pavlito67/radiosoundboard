@@ -15,19 +15,17 @@ const players = [playerA, playerB];
 let ytPlayer = null;
 let isYTApiReady = false;
 
-// Cargar la API de YouTube
 window.onYouTubeIframeAPIReady = function() {
   isYTApiReady = true;
 };
 
-// Extraer ID de video de YouTube
 function getYouTubeID(url) {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
   const match = url.match(regExp);
   return (match && match[2].length === 11) ? match[2] : null;
 }
 
-// CONTEXTO DE AUDIO PARA BOOST DE VOLUMEN EN MP3
+// CONTEXTO DE AUDIO PARA BOOST DE VOLUMEN
 let audioCtx = null;
 let gainNodeA = null;
 let gainNodeB = null;
@@ -59,7 +57,7 @@ document.addEventListener('click', initAudioContext, { once: true });
 document.addEventListener('touchstart', initAudioContext, { once: true });
 
 // ==========================================
-// PLAYLIST DE CANCIONES Y EFECTOS
+// CANCIONES Y EFECTOS PRECARGADOS
 // ==========================================
 let playlist = JSON.parse(localStorage.getItem('radio_playlist')) || [
   { name: 'Amor De Adolescentes', src: 'musica/Amor_De_Adolescentes.mp3' },
@@ -132,15 +130,79 @@ const btnAddSound = document.getElementById('btn-add-sound');
 const soundGrid = document.getElementById('sound-grid');
 const trackTitle = document.getElementById('current-track-title');
 const ytContainer = document.getElementById('yt-player-container');
+const playlistContainer = document.getElementById('playlist-items');
 
 document.addEventListener('DOMContentLoaded', () => {
   renderSounds();
+  renderPlaylist();
   setupEventListeners();
   updateVolume();
 });
 
 // ==========================================
-// CONTROL DE VOLUMEN Y MODO YOUTUBE
+// RENDERIZAR PLAYLIST Y BOTONES DE EDICIÓN
+// ==========================================
+function renderPlaylist() {
+  playlistContainer.innerHTML = '';
+  
+  if (playlist.length === 0) {
+    playlistContainer.innerHTML = '<li style="color:var(--text-muted); font-size:0.85rem;">Lista vacía</li>';
+    return;
+  }
+
+  playlist.forEach((item, index) => {
+    const li = document.createElement('li');
+    li.className = 'playlist-item';
+
+    const spanName = document.createElement('span');
+    spanName.className = 'playlist-name';
+    spanName.textContent = `${index + 1}. ${item.name}`;
+    spanName.onclick = () => {
+      playNextTrack(item.src);
+      trackTitle.textContent = item.name;
+    };
+
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'playlist-actions';
+
+    // Botón Lápiz Verde (Editar nombre)
+    const btnEdit = document.createElement('button');
+    btnEdit.className = 'action-btn btn-edit';
+    btnEdit.innerHTML = '<i class="fa-solid fa-pen"></i>';
+    btnEdit.onclick = () => {
+      const newName = prompt("Nuevo nombre para la canción:", item.name);
+      if (newName && newName.trim() !== '') {
+        playlist[index].name = newName;
+        savePlaylist();
+        renderPlaylist();
+      }
+    };
+
+    // Botón Basura Rojo (Eliminar)
+    const btnDelete = document.createElement('button');
+    btnDelete.className = 'action-btn btn-delete';
+    btnDelete.innerHTML = '<i class="fa-solid fa-trash"></i>';
+    btnDelete.onclick = () => {
+      playlist.splice(index, 1);
+      savePlaylist();
+      renderPlaylist();
+    };
+
+    actionsDiv.appendChild(btnEdit);
+    actionsDiv.appendChild(btnDelete);
+
+    li.appendChild(spanName);
+    li.appendChild(actionsDiv);
+    playlistContainer.appendChild(li);
+  });
+}
+
+function savePlaylist() {
+  localStorage.setItem('radio_playlist', JSON.stringify(playlist));
+}
+
+// ==========================================
+// MODO YOUTUBE Y VOLUMEN
 // ==========================================
 function setYouTubeMode(active) {
   isPlayingYT = active;
@@ -148,7 +210,7 @@ function setYouTubeMode(active) {
     volumeSlider.disabled = true;
     volumeSlider.style.opacity = "0.3";
     ytVolumeWarning.style.display = "block";
-    btnPlayPause.style.display = "none"; // Se oculta porque la pausa se hace directamente en el video
+    btnPlayPause.style.display = "none";
     ytContainer.style.display = "block";
   } else {
     volumeSlider.disabled = false;
@@ -184,8 +246,6 @@ function setDucking(active) {
 // ==========================================
 function playNextTrack(forcedSrc = null) {
   initAudioContext();
-
-  // Detener reproductores de MP3 actuales
   players.forEach(p => p.pause());
 
   let nextTrackSrc = forcedSrc;
@@ -205,7 +265,6 @@ function playNextTrack(forcedSrc = null) {
   const ytID = getYouTubeID(nextTrackSrc);
 
   if (ytID) {
-    // MODO YOUTUBE
     setYouTubeMode(true);
     trackTitle.textContent = trackName || "Video de YouTube";
 
@@ -220,7 +279,6 @@ function playNextTrack(forcedSrc = null) {
       });
     }
   } else {
-    // MODO MP3 LOCAL / STREAM
     setYouTubeMode(false);
     if (trackName) trackTitle.textContent = trackName;
 
@@ -241,7 +299,7 @@ function playNextTrack(forcedSrc = null) {
 }
 
 // ==========================================
-// BOTONERA DE EFECTOS
+// EFECTOS DE SONIDO
 // ==========================================
 function playSound(src) {
   initAudioContext();
@@ -310,8 +368,8 @@ function setupEventListeners() {
   document.getElementById('input-music-file').addEventListener('change', (e) => {
     const files = Array.from(e.target.files);
     files.forEach(f => playlist.push({ name: f.name.replace(/\.[^/.]+$/, ""), src: URL.createObjectURL(f) }));
-    localStorage.setItem('radio_playlist', JSON.stringify(playlist));
-    alert(`${files.length} canción(es) agregada(s).`);
+    savePlaylist();
+    renderPlaylist();
     closeModals();
   });
 
@@ -320,27 +378,12 @@ function setupEventListeners() {
     if (url) {
       const title = prompt("Escribe el nombre del tema:") || "Canción Añadida";
       playlist.push({ name: title, src: url });
-      localStorage.setItem('radio_playlist', JSON.stringify(playlist));
+      savePlaylist();
+      renderPlaylist();
       playNextTrack(url);
       trackTitle.textContent = title;
       closeModals();
     }
-  });
-
-  document.getElementById('btn-playlist').addEventListener('click', () => {
-    const list = document.getElementById('playlist-items');
-    list.innerHTML = '';
-    playlist.forEach((item, index) => {
-      const li = document.createElement('li');
-      li.textContent = `${index + 1}. ${item.name}`;
-      li.onclick = () => { 
-        playNextTrack(item.src); 
-        trackTitle.textContent = item.name;
-        closeModals(); 
-      };
-      list.appendChild(li);
-    });
-    document.getElementById('modal-playlist').style.display = 'flex';
   });
 
   document.getElementById('btn-add-music').addEventListener('click', () => {
