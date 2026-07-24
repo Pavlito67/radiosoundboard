@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Botonera Radio App</title>
   <link rel="icon" href="data:,">
+  <!-- Íconos de FontAwesome para el lápiz y la basura -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -33,7 +35,7 @@
         <h2 id="current-track-title">Ninguna canción seleccionada</h2>
       </div>
 
-      <!-- CONTENEDOR PARA EL VIDEO DE YOUTUBE (Oculto por defecto) -->
+      <!-- CONTENEDOR PARA EL VIDEO DE YOUTUBE -->
       <div id="yt-player-container" style="display: none; margin: 15px 0; text-align: center;">
         <div id="yt-player"></div>
       </div>
@@ -44,36 +46,35 @@
       </div>
 
       <div class="player-actions">
-        <button id="btn-playlist" class="btn btn-link">📋 Ver Playlist</button>
-        <button id="btn-add-music" class="btn btn-link">+ Añadir Música</button>
+        <button id="btn-add-music" class="btn btn-primary btn-block">+ Añadir Música / Link</button>
       </div>
     </section>
 
-    <!-- BOTONERA DE EFECTOS -->
-    <section class="card soundboard-card">
-      <div class="soundboard-header">
-        <h3>Efectos de Sonido</h3>
-        <div class="soundboard-actions">
-          <button id="btn-stop-sounds" class="btn btn-danger btn-sm">⏹ Detener Sonidos</button>
-          <button id="btn-add-sound" class="btn btn-success btn-sm">+ Sonido</button>
+    <!-- PANEL PRINCIPAL (EFECTOS Y PLAYLIST LADO A LADO) -->
+    <div class="main-grid">
+      <!-- BOTONERA DE EFECTOS -->
+      <section class="card soundboard-card">
+        <div class="soundboard-header">
+          <h3>Efectos</h3>
+          <div class="soundboard-actions">
+            <button id="btn-stop-sounds" class="btn btn-danger btn-sm">⏹ Parar</button>
+            <button id="btn-add-sound" class="btn btn-success btn-sm">+ Sonido</button>
+          </div>
         </div>
-      </div>
+        <div id="sound-grid" class="sound-grid"></div>
+      </section>
 
-      <div id="sound-grid" class="sound-grid"></div>
-    </section>
-  </div>
-
-  <!-- MODALES -->
-  <div id="modal-playlist" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Lista de Canciones</h3>
-        <button class="close-modal">&times;</button>
-      </div>
-      <ul id="playlist-items" class="playlist-list"></ul>
+      <!-- PLAYLIST SIEMPRE VISIBLE -->
+      <section class="card playlist-card">
+        <div class="playlist-header">
+          <h3>Música / Playlist</h3>
+        </div>
+        <ul id="playlist-items" class="playlist-list"></ul>
+      </section>
     </div>
   </div>
 
+  <!-- MODALES AUXILIARES -->
   <div id="modal-add-music" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -107,7 +108,6 @@
     </div>
   </div>
 
-  <!-- API de YouTube oficial -->
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="app.js"></script>
 </body>
